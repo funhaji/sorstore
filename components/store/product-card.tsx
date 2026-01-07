@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -28,13 +28,25 @@ export function ProductCard({ product, featured }: ProductCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
 
+  useEffect(() => {
+    console.log(
+      "[v0] Product:",
+      product.name_fa,
+      "| image_url:",
+      product.image_url,
+      "| type:",
+      typeof product.image_url,
+    )
+  }, [product])
+
   const discount = product.original_price
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : 0
 
   const formatPrice = (price: number) => new Intl.NumberFormat("fa-IR").format(price)
 
-  const hasValidImage = product.image_url && product.image_url.trim() !== "" && !imageError
+  const imageUrl = product.image_url?.trim() || null
+  const hasValidImage = imageUrl && imageUrl.length > 0 && !imageError
 
   return (
     <>
@@ -45,32 +57,37 @@ export function ProductCard({ product, featured }: ProductCardProps) {
         )}
       >
         <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-muted to-muted/50">
-          {hasValidImage && !imageLoaded && <div className="absolute inset-0 bg-muted animate-pulse" />}
-
-          {hasValidImage ? (
-            <img
-              src={product.image_url! || "/placeholder.svg"}
-              alt={product.name_fa}
-              className={cn(
-                "object-cover w-full h-full transition-all duration-700 group-hover:scale-110",
-                imageLoaded ? "opacity-100" : "opacity-0",
-              )}
-              onLoad={() => setImageLoaded(true)}
-              onError={() => {
-                setImageError(true)
-                setImageLoaded(true)
-              }}
-            />
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-2">
-              {imageError ? (
-                <>
+          {imageUrl ? (
+            <>
+              {!imageLoaded && !imageError && <div className="absolute inset-0 bg-muted animate-pulse" />}
+              <img
+                src={imageUrl || "/placeholder.svg"}
+                alt={product.name_fa}
+                className={cn(
+                  "object-cover w-full h-full transition-all duration-700 group-hover:scale-110",
+                  imageLoaded && !imageError ? "opacity-100" : "opacity-0",
+                )}
+                onLoad={() => {
+                  console.log("[v0] Image loaded successfully for:", product.name_fa)
+                  setImageLoaded(true)
+                }}
+                onError={(e) => {
+                  console.log("[v0] Image failed to load for:", product.name_fa, "URL:", imageUrl)
+                  setImageError(true)
+                  setImageLoaded(true)
+                }}
+              />
+              {imageError && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                   <ImageOff className="h-12 w-12 text-muted-foreground/40" />
                   <span className="text-xs text-muted-foreground/60">خطا در بارگذاری تصویر</span>
-                </>
-              ) : (
-                <Sparkles className="h-16 w-16 text-muted-foreground/30" />
+                </div>
               )}
+            </>
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+              <Sparkles className="h-16 w-16 text-muted-foreground/30" />
+              <span className="text-xs text-muted-foreground/60">بدون تصویر</span>
             </div>
           )}
 
@@ -143,9 +160,9 @@ export function ProductCard({ product, featured }: ProductCardProps) {
 
           <div className="grid md:grid-cols-2 gap-6 mt-4">
             <div className="aspect-square rounded-2xl overflow-hidden bg-muted">
-              {hasValidImage ? (
+              {imageUrl && !imageError ? (
                 <img
-                  src={product.image_url! || "/placeholder.svg"}
+                  src={imageUrl || "/placeholder.svg"}
                   alt={product.name_fa}
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -155,14 +172,8 @@ export function ProductCard({ product, featured }: ProductCardProps) {
                 />
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center gap-2">
-                  {imageError ? (
-                    <>
-                      <ImageOff className="h-16 w-16 text-muted-foreground/40" />
-                      <span className="text-sm text-muted-foreground/60">خطا در بارگذاری تصویر</span>
-                    </>
-                  ) : (
-                    <Sparkles className="h-20 w-20 text-muted-foreground/30" />
-                  )}
+                  <ImageOff className="h-16 w-16 text-muted-foreground/40" />
+                  <span className="text-sm text-muted-foreground/60">بدون تصویر</span>
                 </div>
               )}
             </div>
