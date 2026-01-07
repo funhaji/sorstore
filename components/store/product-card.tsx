@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { AlertTriangle, Eye, Sparkles } from "lucide-react"
+import { AlertTriangle, Eye, Sparkles, ImageOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface ProductCardProps {
@@ -26,12 +26,15 @@ interface ProductCardProps {
 export function ProductCard({ product, featured }: ProductCardProps) {
   const [showDialog, setShowDialog] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
+  const [imageError, setImageError] = useState(false)
 
   const discount = product.original_price
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : 0
 
   const formatPrice = (price: number) => new Intl.NumberFormat("fa-IR").format(price)
+
+  const hasValidImage = product.image_url && product.image_url.trim() !== "" && !imageError
 
   return (
     <>
@@ -42,21 +45,32 @@ export function ProductCard({ product, featured }: ProductCardProps) {
         )}
       >
         <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-muted to-muted/50">
-          {!imageLoaded && <div className="absolute inset-0 bg-muted animate-pulse" />}
+          {hasValidImage && !imageLoaded && <div className="absolute inset-0 bg-muted animate-pulse" />}
 
-          {product.image_url ? (
+          {hasValidImage ? (
             <img
-              src={product.image_url || "/placeholder.svg"}
+              src={product.image_url! || "/placeholder.svg"}
               alt={product.name_fa}
               className={cn(
                 "object-cover w-full h-full transition-all duration-700 group-hover:scale-110",
                 imageLoaded ? "opacity-100" : "opacity-0",
               )}
               onLoad={() => setImageLoaded(true)}
+              onError={() => {
+                setImageError(true)
+                setImageLoaded(true)
+              }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Sparkles className="h-16 w-16 text-muted-foreground/30" />
+            <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+              {imageError ? (
+                <>
+                  <ImageOff className="h-12 w-12 text-muted-foreground/40" />
+                  <span className="text-xs text-muted-foreground/60">خطا در بارگذاری تصویر</span>
+                </>
+              ) : (
+                <Sparkles className="h-16 w-16 text-muted-foreground/30" />
+              )}
             </div>
           )}
 
@@ -117,7 +131,6 @@ export function ProductCard({ product, featured }: ProductCardProps) {
         </CardContent>
       </Card>
 
-      {/* Product Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-2xl" dir="rtl">
           <DialogHeader>
@@ -130,15 +143,26 @@ export function ProductCard({ product, featured }: ProductCardProps) {
 
           <div className="grid md:grid-cols-2 gap-6 mt-4">
             <div className="aspect-square rounded-2xl overflow-hidden bg-muted">
-              {product.image_url ? (
+              {hasValidImage ? (
                 <img
-                  src={product.image_url || "/placeholder.svg"}
+                  src={product.image_url! || "/placeholder.svg"}
                   alt={product.name_fa}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement
+                    target.style.display = "none"
+                  }}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <Sparkles className="h-20 w-20 text-muted-foreground/30" />
+                <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+                  {imageError ? (
+                    <>
+                      <ImageOff className="h-16 w-16 text-muted-foreground/40" />
+                      <span className="text-sm text-muted-foreground/60">خطا در بارگذاری تصویر</span>
+                    </>
+                  ) : (
+                    <Sparkles className="h-20 w-20 text-muted-foreground/30" />
+                  )}
                 </div>
               )}
             </div>
