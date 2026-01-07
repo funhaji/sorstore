@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -25,19 +25,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product, featured }: ProductCardProps) {
   const [showDialog, setShowDialog] = useState(false)
-  const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
-
-  useEffect(() => {
-    console.log(
-      "[v0] Product:",
-      product.name_fa,
-      "| image_url:",
-      product.image_url,
-      "| type:",
-      typeof product.image_url,
-    )
-  }, [product])
 
   const discount = product.original_price
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
@@ -46,7 +34,6 @@ export function ProductCard({ product, featured }: ProductCardProps) {
   const formatPrice = (price: number) => new Intl.NumberFormat("fa-IR").format(price)
 
   const imageUrl = product.image_url?.trim() || null
-  const hasValidImage = imageUrl && imageUrl.length > 0 && !imageError
 
   return (
     <>
@@ -57,37 +44,26 @@ export function ProductCard({ product, featured }: ProductCardProps) {
         )}
       >
         <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-muted to-muted/50">
-          {imageUrl ? (
-            <>
-              {!imageLoaded && !imageError && <div className="absolute inset-0 bg-muted animate-pulse" />}
-              <img
-                src={imageUrl || "/placeholder.svg"}
-                alt={product.name_fa}
-                className={cn(
-                  "object-cover w-full h-full transition-all duration-700 group-hover:scale-110",
-                  imageLoaded && !imageError ? "opacity-100" : "opacity-0",
-                )}
-                onLoad={() => {
-                  console.log("[v0] Image loaded successfully for:", product.name_fa)
-                  setImageLoaded(true)
-                }}
-                onError={(e) => {
-                  console.log("[v0] Image failed to load for:", product.name_fa, "URL:", imageUrl)
-                  setImageError(true)
-                  setImageLoaded(true)
-                }}
-              />
-              {imageError && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                  <ImageOff className="h-12 w-12 text-muted-foreground/40" />
-                  <span className="text-xs text-muted-foreground/60">خطا در بارگذاری تصویر</span>
-                </div>
-              )}
-            </>
+          {imageUrl && !imageError ? (
+            <img
+              src={imageUrl || "/placeholder.svg"}
+              alt={product.name_fa}
+              className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110"
+              onError={() => setImageError(true)}
+            />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center gap-2">
-              <Sparkles className="h-16 w-16 text-muted-foreground/30" />
-              <span className="text-xs text-muted-foreground/60">بدون تصویر</span>
+              {imageError ? (
+                <>
+                  <ImageOff className="h-12 w-12 text-muted-foreground/40" />
+                  <span className="text-xs text-muted-foreground/60">خطا در بارگذاری تصویر</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-16 w-16 text-muted-foreground/30" />
+                  <span className="text-xs text-muted-foreground/60">بدون تصویر</span>
+                </>
+              )}
             </div>
           )}
 
